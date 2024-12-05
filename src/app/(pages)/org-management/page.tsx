@@ -37,6 +37,8 @@ type Member = {
   role: "Admin" | "User";
 };
 
+export const runtime = "edge";
+
 export default function OrganizationManagement() {
   const [members, setMembers] = useState<Member[]>([
     { id: "1", name: "John Doe", email: "john@example.com", role: "Admin" },

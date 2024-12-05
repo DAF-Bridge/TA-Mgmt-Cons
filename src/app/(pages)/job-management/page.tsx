@@ -40,6 +40,8 @@ type Job = {
   description: string;
 };
 
+export const runtime = "edge";
+
 export default function JobBoard() {
   const [jobs, setJobs] = useState<Job[]>([
     {

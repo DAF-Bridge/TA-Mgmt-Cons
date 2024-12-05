@@ -40,6 +40,8 @@ type Event = {
   description: string;
 };
 
+export const runtime = "edge";
+
 export default function EventManagement() {
   const [events, setEvents] = useState<Event[]>([
     {
