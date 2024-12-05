@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "runtime": "nodejs19.x"
+  },
   "build": {
     "env": {
       "NPM_FLAGS": "--legacy-peer-deps"
