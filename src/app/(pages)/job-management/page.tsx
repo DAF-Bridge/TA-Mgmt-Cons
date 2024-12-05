@@ -36,11 +36,9 @@ type Job = {
   title: string;
   department: string;
   location: string;
-  type: "Full-time" | "Part-time" | "Contract";
+  type: "Full-time" | "Part-time" | "Contract" | "Internship";
   description: string;
 };
-
-export const runtime = "edge";
 
 export default function JobBoard() {
   const [jobs, setJobs] = useState<Job[]>([
@@ -73,7 +71,7 @@ export default function JobBoard() {
     },
   ]);
 
-  const [newJob, setNewJob] = useState<Job>({
+  const [currentJob, setCurrentJob] = useState<Job>({
     id: "",
     title: "",
     department: "",
@@ -81,35 +79,44 @@ export default function JobBoard() {
     type: "Full-time",
     description: "",
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  const openAddDialog = () => {
+    setCurrentJob({
+      id: "",
+      title: "",
+      department: "",
+      location: "",
+      type: "Full-time",
+      description: "",
+    });
+    setIsEditing(false);
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (job: Job) => {
+    setCurrentJob(job);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
 
   const addOrUpdateJob = () => {
     if (
-      newJob.title &&
-      newJob.department &&
-      newJob.location &&
-      newJob.description
+      currentJob.title &&
+      currentJob.department &&
+      currentJob.location &&
+      currentJob.description
     ) {
       if (isEditing) {
-        setJobs(jobs.map((job) => (job.id === newJob.id ? newJob : job)));
+        setJobs(
+          jobs.map((job) => (job.id === currentJob.id ? currentJob : job))
+        );
       } else {
-        setJobs([...jobs, { ...newJob, id: Date.now().toString() }]);
+        setJobs([...jobs, { ...currentJob, id: Date.now().toString() }]);
       }
-      setNewJob({
-        id: "",
-        title: "",
-        department: "",
-        location: "",
-        type: "Full-time",
-        description: "",
-      });
-      setIsEditing(false);
+      setIsDialogOpen(false);
     }
-  };
-
-  const editJob = (job: Job) => {
-    setNewJob(job);
-    setIsEditing(true);
   };
 
   const removeJob = (id: string) => {
@@ -119,9 +126,16 @@ export default function JobBoard() {
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8">Job Board</h1>
-
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Open Positions</h2>
+        <div className="flex flex-row justify-between">
+          <h2 className="text-2xl font-semibold mb-4">Open Positions</h2>
+          {/* // This is the button to add a new job */}
+          <Button onClick={openAddDialog}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Add Job
+          </Button>
+        </div>
+        {/* // This is the table to display the list of jobs */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -144,7 +158,7 @@ export default function JobBoard() {
                     variant="ghost"
                     size="icon"
                     className="mr-2"
-                    onClick={() => editJob(job)}
+                    onClick={() => openEditDialog(job)}
                   >
                     <PencilIcon className="h-4 w-4" />
                   </Button>
@@ -161,14 +175,8 @@ export default function JobBoard() {
           </TableBody>
         </Table>
       </div>
-
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Job
-          </Button>
-        </DialogTrigger>
+      {/* // This is the dialog to add or edit a job */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Job" : "Add New Job"}</DialogTitle>
@@ -185,9 +193,9 @@ export default function JobBoard() {
               </Label>
               <Input
                 id="title"
-                value={newJob.title}
+                value={currentJob.title}
                 onChange={(e) =>
-                  setNewJob({ ...newJob, title: e.target.value })
+                  setCurrentJob({ ...currentJob, title: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -198,9 +206,9 @@ export default function JobBoard() {
               </Label>
               <Input
                 id="department"
-                value={newJob.department}
+                value={currentJob.department}
                 onChange={(e) =>
-                  setNewJob({ ...newJob, department: e.target.value })
+                  setCurrentJob({ ...currentJob, department: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -211,9 +219,9 @@ export default function JobBoard() {
               </Label>
               <Input
                 id="location"
-                value={newJob.location}
+                value={currentJob.location}
                 onChange={(e) =>
-                  setNewJob({ ...newJob, location: e.target.value })
+                  setCurrentJob({ ...currentJob, location: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -224,9 +232,9 @@ export default function JobBoard() {
               </Label>
               <Select
                 onValueChange={(value: Job["type"]) =>
-                  setNewJob({ ...newJob, type: value })
+                  setCurrentJob({ ...currentJob, type: value })
                 }
-                defaultValue={newJob.type}
+                defaultValue={currentJob.type}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select job type" />
@@ -235,6 +243,7 @@ export default function JobBoard() {
                   <SelectItem value="Full-time">Full-time</SelectItem>
                   <SelectItem value="Part-time">Part-time</SelectItem>
                   <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Internship">Internship</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -244,9 +253,9 @@ export default function JobBoard() {
               </Label>
               <Textarea
                 id="description"
-                value={newJob.description}
+                value={currentJob.description}
                 onChange={(e) =>
-                  setNewJob({ ...newJob, description: e.target.value })
+                  setCurrentJob({ ...currentJob, description: e.target.value })
                 }
                 className="col-span-3"
               />

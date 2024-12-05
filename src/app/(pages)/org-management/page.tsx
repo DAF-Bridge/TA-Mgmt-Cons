@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
@@ -37,8 +36,6 @@ type Member = {
   role: "Admin" | "User";
 };
 
-export const runtime = "edge";
-
 export default function OrganizationManagement() {
   const [members, setMembers] = useState<Member[]>([
     { id: "1", name: "John Doe", email: "john@example.com", role: "Admin" },
@@ -46,36 +43,40 @@ export default function OrganizationManagement() {
     { id: "3", name: "Bob Johnson", email: "bob@example.com", role: "User" },
   ]);
 
-  const [newMember, setNewMember] = useState({
+  const [currentMember, setCurrentMember] = useState<Member>({
+    id: "",
     name: "",
     email: "",
-    role: "User" as Member["role"],
+    role: "User",
   });
-
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // const addMember = () => {
-  //   if (newMember.name && newMember.email) {
-  //     setMembers([...members, { ...newMember, id: Date.now().toString() }]);
-  //     setNewMember({ name: "", email: "", role: "User" });
-  //   }
-  // };
+  const openAddDialog = () => {
+    setCurrentMember({ id: "", name: "", email: "", role: "User" });
+    setIsEditing(false);
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (member: Member) => {
+    setCurrentMember(member);
+    setIsEditing(true);
+    setIsDialogOpen(true);
+  };
 
   const addOrUpdateMember = () => {
-    if (newMember.name && newMember.email) {
+    if (currentMember.name && currentMember.email) {
       if (isEditing) {
-        //   setMembers(
-        //     members.map((member) =>
-        //       member.id === newMember.id ? newMember : member
-        //     )
-        //   );
-        // } else {
-        setMembers([...members, { ...newMember, id: Date.now().toString() }]);
+        setMembers(
+          members.map((m) => (m.id === currentMember.id ? currentMember : m))
+        );
+      } else {
+        setMembers([
+          ...members,
+          { ...currentMember, id: Date.now().toString() },
+        ]);
       }
-      setNewMember({ name: "", email: "", role: "User" });
-      setIsEditing(false);
-      // setIsDialogOpen(false);
+      setIsDialogOpen(false);
     }
   };
 
@@ -86,9 +87,16 @@ export default function OrganizationManagement() {
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8">Organization Management</h1>
-
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Users</h2>
+        <div className="flex flex-row justify-between">
+          <h2 className="text-2xl font-semibold mb-4">Members</h2>
+          {/* // This is the button to add a new member */}
+          <Button onClick={openAddDialog}>
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Add Member
+          </Button>
+        </div>
+        {/* // This is the table of members */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -105,7 +113,12 @@ export default function OrganizationManagement() {
                 <TableCell>{member.email}</TableCell>
                 <TableCell>{member.role}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" className="mr-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="mr-2"
+                    onClick={() => openEditDialog(member)}
+                  >
                     <PencilIcon className="h-4 w-4" />
                   </Button>
                   <Button
@@ -121,19 +134,17 @@ export default function OrganizationManagement() {
           </TableBody>
         </Table>
       </div>
-
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Member
-          </Button>
-        </DialogTrigger>
+      {/* // This is the dialog to add or edit a member */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add New Member</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Member" : "Add New Member"}
+            </DialogTitle>
             <DialogDescription>
-              Enter the details of the new organization member here.
+              {isEditing
+                ? "Edit the details of the organization member here."
+                : "Enter the details of the new organization member here."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -143,9 +154,9 @@ export default function OrganizationManagement() {
               </Label>
               <Input
                 id="name"
-                value={newMember.name}
+                value={currentMember.name}
                 onChange={(e) =>
-                  setNewMember({ ...newMember, name: e.target.value })
+                  setCurrentMember({ ...currentMember, name: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -157,9 +168,9 @@ export default function OrganizationManagement() {
               <Input
                 id="email"
                 type="email"
-                value={newMember.email}
+                value={currentMember.email}
                 onChange={(e) =>
-                  setNewMember({ ...newMember, email: e.target.value })
+                  setCurrentMember({ ...currentMember, email: e.target.value })
                 }
                 className="col-span-3"
               />
@@ -170,9 +181,9 @@ export default function OrganizationManagement() {
               </Label>
               <Select
                 onValueChange={(value: Member["role"]) =>
-                  setNewMember({ ...newMember, role: value })
+                  setCurrentMember({ ...currentMember, role: value })
                 }
-                defaultValue={newMember.role}
+                defaultValue={currentMember.role}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select a role" />
@@ -186,7 +197,7 @@ export default function OrganizationManagement() {
           </div>
           <DialogFooter>
             <Button type="submit" onClick={addOrUpdateMember}>
-              Add Member
+              {isEditing ? "Update Member" : "Add Member"}
             </Button>
           </DialogFooter>
         </DialogContent>

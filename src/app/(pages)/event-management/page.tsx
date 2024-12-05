@@ -115,7 +115,121 @@ export default function EventManagement() {
       <h1 className="text-3xl font-bold mb-8">Event Management</h1>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Upcoming Events</h2>
+        <div className="flex flex-row justify-between">
+          <h2 className="text-2xl font-semibold mb-4">Upcoming Events</h2>
+          {/* // This is the button to add a new event */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  setIsEditing(false);
+                  setNewEvent({
+                    id: "",
+                    title: "",
+                    date: new Date(),
+                    location: "",
+                    description: "",
+                  });
+                }}
+              >
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Add Event
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {isEditing ? "Edit Event" : "Add New Event"}
+                </DialogTitle>
+                <DialogDescription>
+                  {isEditing
+                    ? "Edit the details of the event here."
+                    : "Enter the details of the new event here."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title
+                  </Label>
+                  <Input
+                    id="title"
+                    value={newEvent.title}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, title: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">
+                    Date
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !newEvent.date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newEvent.date ? (
+                          format(newEvent.date, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={newEvent.date}
+                        onSelect={(date) =>
+                          date && setNewEvent({ ...newEvent, date })
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">
+                    Location
+                  </Label>
+                  <Input
+                    id="location"
+                    value={newEvent.location}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, location: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={newEvent.description}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, description: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" onClick={addOrUpdateEvent}>
+                  {isEditing ? "Update Event" : "Add Event"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        {/* // This is the table of events */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -155,117 +269,6 @@ export default function EventManagement() {
           </TableBody>
         </Table>
       </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            onClick={() => {
-              setIsEditing(false);
-              setNewEvent({
-                id: "",
-                title: "",
-                date: new Date(),
-                location: "",
-                description: "",
-              });
-            }}
-          >
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Event
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[625px]">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "Edit Event" : "Add New Event"}
-            </DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? "Edit the details of the event here."
-                : "Enter the details of the new event here."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={newEvent.title}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, title: e.target.value })
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">
-                Date
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-[280px] justify-start text-left font-normal",
-                      !newEvent.date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newEvent.date ? (
-                      format(newEvent.date, "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={newEvent.date}
-                    onSelect={(date) =>
-                      date && setNewEvent({ ...newEvent, date })
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">
-                Location
-              </Label>
-              <Input
-                id="location"
-                value={newEvent.location}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, location: e.target.value })
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={newEvent.description}
-                onChange={(e) =>
-                  setNewEvent({ ...newEvent, description: e.target.value })
-                }
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={addOrUpdateEvent}>
-              {isEditing ? "Update Event" : "Add Event"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

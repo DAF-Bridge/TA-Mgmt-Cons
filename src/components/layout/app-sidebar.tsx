@@ -35,9 +35,8 @@ const data = {
   versions: ["1.0.0", "1.1.0", "2.0.0-beta"],
   navMain: [
     {
-      title: "Getting Started",
+      title: "Management",
       items: [
-        { title: "Introduction", url: "/intro" },
         { title: "Org Management", url: "/org-management" },
         { title: "Job Management", url: "/job-management" },
         { title: "Event Management", url: "/event-management" },
