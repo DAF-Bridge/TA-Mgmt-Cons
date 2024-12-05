@@ -2,8 +2,7 @@ name: Deploy to Netlify
 
 on:
   push:
-    branches:
-      [main, develop-anda] # or the branch you want to trigger the deployment on
+    branches: [main, develop-anda] # or the branch you want to trigger the deployment on
 
 jobs:
   build-and-deploy:
@@ -13,6 +12,8 @@ jobs:
       # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{secrets.GH_PAT}}
 
       # Step 2: Set up Node.js (ensure the correct version is used)
       - name: Set up Node.js
