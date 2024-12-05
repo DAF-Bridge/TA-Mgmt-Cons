@@ -1,15 +1,20 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { Check, ChevronsUpDown, GalleryVerticalEnd, Search } from 'lucide-react'
+import * as React from "react";
+import {
+  Check,
+  ChevronsUpDown,
+  GalleryVerticalEnd,
+  Search,
+} from "lucide-react";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Label } from '@/components/ui/label'
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
 import {
   Sidebar,
   SidebarContent,
@@ -22,43 +27,47 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@/components/ui/sidebar'
+} from "@/components/ui/sidebar";
+// import { title } from "process";
 
 // Sample data for the sidebar
 const data = {
-  versions: ['1.0.0', '1.1.0', '2.0.0-beta'],
+  versions: ["1.0.0", "1.1.0", "2.0.0-beta"],
   navMain: [
     {
-      title: 'Getting Started',
+      title: "Getting Started",
       items: [
-        { title: 'Introduction', url: '/intro' },
-        { title: 'Installation', url: '#' },
-        { title: 'Typography', url: '#' },
+        { title: "Introduction", url: "/intro" },
+        { title: "Org Management", url: "/org-management" },
+        { title: "Job Management", url: "/job-management" },
+        { title: "Event Management", url: "/event-management" },
       ],
     },
     {
-      title: 'Components',
+      title: "Components",
       items: [
-        { title: 'Accordion', url: '#' },
-        { title: 'Alert', url: '#' },
-        { title: 'Alert Dialog', url: '#', isActive: true },
-        { title: 'Aspect Ratio', url: '#' },
-        { title: 'Avatar', url: '#' },
-        { title: 'Badge', url: '#' },
+        { title: "Accordion", url: "#" },
+        { title: "Alert", url: "#" },
+        { title: "Alert Dialog", url: "#", isActive: true },
+        { title: "Aspect Ratio", url: "#" },
+        { title: "Avatar", url: "#" },
+        { title: "Badge", url: "#" },
       ],
     },
-    {
-      title: 'Hooks',
-      items: [
-        { title: 'use-debounce', url: '#' },
-        { title: 'use-media-query', url: '#' },
-      ],
-    },
+    // {
+    //   title: "Hooks",
+    //   items: [
+    //     { title: "use-debounce", url: "#" },
+    //     { title: "use-media-query", url: "#" },
+    //   ],
+    // },
   ],
-}
+};
 
 export function AppSidebar() {
-  const [selectedVersion, setSelectedVersion] = React.useState(data.versions[0])
+  const [selectedVersion, setSelectedVersion] = React.useState(
+    data.versions[0]
+  );
 
   return (
     <Sidebar>
@@ -90,7 +99,7 @@ export function AppSidebar() {
                     key={version}
                     onSelect={() => setSelectedVersion(version)}
                   >
-                    v{version}{' '}
+                    v{version}{" "}
                     {version === selectedVersion && (
                       <Check className="ml-auto" />
                     )}
@@ -136,6 +145,5 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
-

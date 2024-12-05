@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-export default function DashboardLayout({
+export default function AdminConsoleLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
