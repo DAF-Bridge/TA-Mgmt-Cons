@@ -7,7 +7,7 @@ import {
   ChevronUp,
   GalleryVerticalEnd,
   Search,
-  User,
+  // User,
   User2,
 } from "lucide-react";
 
