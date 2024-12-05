@@ -1,0 +1,38 @@
+name: Deploy to Netlify
+
+on:
+  push:
+    branches:
+      - main # or the branch you want to trigger the deployment on
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js (ensure the correct version is used)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.10.0" # specify your Node.js version here
+
+      # Step 3: Install dependencies with --force
+      - name: Install dependencies
+        run: npm install --force
+
+      # Step 4: Build the project
+      - name: Build project
+        run: npm run build # or your build command
+
+      # Step 5: Deploy to Netlify
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          curl -sL https://github.com/netlify/cli/releases/download/v10.1.0/netlify-cli-linux-x86_64.tar.gz | tar xz
+          ./netlify-cli/netlify deploy --dir=./out --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --prod
