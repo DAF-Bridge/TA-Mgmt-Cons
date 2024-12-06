@@ -44,6 +44,15 @@ const data = {
       title: "Management",
       items: [
         { title: "Dashboard", url: "/dashboard" },
+        { title: "Employee Management", url: "/employee-management" },
+        { title: "Career Management", url: "/job-management" },
+        { title: "Event Management", url: "/event-management" },
+      ],
+    },
+    {
+      title: "Admin",
+      items: [
+        { title: "Dashboard", url: "/dashboard" },
         { title: "Org Management", url: "/org-management" },
         { title: "Job Management", url: "/job-management" },
         { title: "Event Management", url: "/event-management" },
