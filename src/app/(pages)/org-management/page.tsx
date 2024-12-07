@@ -33,27 +33,53 @@ type Member = {
   id: string;
   name: string;
   email: string;
+  organization: string;
   role: "Admin" | "User";
 };
 
 export default function OrganizationManagement() {
   const [members, setMembers] = useState<Member[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", role: "Admin" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", role: "User" },
-    { id: "3", name: "Bob Johnson", email: "bob@example.com", role: "User" },
+    {
+      id: "1",
+      name: "John Doe",
+      email: "john@example.com",
+      organization: "Chiang Mai University",
+      role: "Admin",
+    },
+    {
+      id: "2",
+      name: "Jane Smith",
+      email: "jane@example.com",
+      organization: "SE Thailand",
+      role: "User",
+    },
+    {
+      id: "3",
+      name: "Bob Johnson",
+      email: "bob@example.com",
+      organization: "Chiang Mai University",
+      role: "User",
+    },
   ]);
 
   const [currentMember, setCurrentMember] = useState<Member>({
     id: "",
     name: "",
     email: "",
+    organization: "",
     role: "User",
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const openAddDialog = () => {
-    setCurrentMember({ id: "", name: "", email: "", role: "User" });
+    setCurrentMember({
+      id: "",
+      name: "",
+      email: "",
+      organization: "",
+      role: "User",
+    });
     setIsEditing(false);
     setIsDialogOpen(true);
   };
@@ -65,12 +91,40 @@ export default function OrganizationManagement() {
   };
 
   const addOrUpdateMember = () => {
+    // Show loading toast immediately when the request is sent
+    // const loadingToastId = toast.loading("รอสักครู่...");
+
     if (currentMember.name && currentMember.email) {
       if (isEditing) {
+        // POST
+        // try {
+        //   const apiUrl = formatInternalUrl("/api/org/add-member");
+        //   const res = await fetch(apiUrl, {
+        //     method: "POST",
+        //     headers: {
+        //       "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify(data), // Add more here
+        //   });
+
+        //   if (!res.ok) {
+        //     throw new Error("Failed to add member");
+        //   }
+
+        //   //extract data here
+        //   const responseData = await res.json();
+        //   console.log(responseData);
+        // } catch (e) {
+        //   // add toast here
+        //   toast.dismiss();
+        //   toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+        //   console.error(e);
+        // }
         setMembers(
           members.map((m) => (m.id === currentMember.id ? currentMember : m))
         );
       } else {
+        // PUT
         setMembers([
           ...members,
           { ...currentMember, id: Date.now().toString() },
@@ -102,6 +156,7 @@ export default function OrganizationManagement() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Organization</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -111,6 +166,7 @@ export default function OrganizationManagement() {
               <TableRow key={member.id}>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
+                <TableCell>{member.organization}</TableCell>
                 <TableCell>{member.role}</TableCell>
                 <TableCell>
                   <Button
@@ -134,6 +190,7 @@ export default function OrganizationManagement() {
           </TableBody>
         </Table>
       </div>
+
       {/* // This is the dialog to add or edit a member */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
@@ -171,6 +228,22 @@ export default function OrganizationManagement() {
                 value={currentMember.email}
                 onChange={(e) =>
                   setCurrentMember({ ...currentMember, email: e.target.value })
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="organization" className="text-right">
+                Organization
+              </Label>
+              <Input
+                id="organization"
+                value={currentMember.organization}
+                onChange={(e) =>
+                  setCurrentMember({
+                    ...currentMember,
+                    organization: e.target.value,
+                  })
                 }
                 className="col-span-3"
               />
