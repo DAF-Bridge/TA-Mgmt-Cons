@@ -2,7 +2,9 @@ import { JobAdding } from "@/lib/types";
 import { formatExternalUrl } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: Request,
+  { params }: { params: { orgId: string } }
+) {
   try {
     // Parse the incoming request body
     const body: unknown = await request.json();
@@ -24,10 +26,11 @@ export async function POST(request: Request) {
     }
 
     // Send data to Golang backend if validation is successful
-    const apiUrl = formatExternalUrl("/api/org/1/open-job");
+    const apiUrl = formatExternalUrl(`/org/${params.orgId}/open-job`);
+    console.log(apiUrl);
 
     const dataToBeSend = {
-        organization_id: 1,
+        organization_id: params.orgId,
         title: result.data?.title,
         scope: result.data?.scope,
         prerequisite: result.data?.prerequisite,
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
         // If Go server returns an error, return the error message
         const errorData = await res.json();
         return NextResponse.json(
-          { errors: errorData.message || "Failed to signup" },
+          { errors: errorData.message || "Failed to add job" },
           { status: res.status }
         );
     }
