@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         scope: result.data?.scope,
         prerequisite: result.data?.prerequisite,
         workplace: result.data?.workplace,
-        worktype: result.data?.worktype,
+        worktype: result.data?.work_type,
         period: result.data?.period,
         descriptioin: result.data?.description,
         hours_per_day: result.data?.hours_per_day,
