@@ -32,95 +32,114 @@ import {
 import { PlusIcon, TrashIcon, PencilIcon } from "lucide-react";
 import { useForm, type FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { JobAdding, TJobAdding } from "@/lib/types";
+import { Job, JobAdding, TJobAdding } from "@/lib/types";
 import toast from "react-hot-toast";
 import { formatInternalUrl } from "@/lib/utils";
 
-type Job = {
-  id: string;
-  title: string;
-  scope: string;
-  prerequisite: string[];
-  workplace: string;
-  worktype: "fulltime" | "parttime" | "contract" | "internship";
-  career_stage: "entrylevel" | "mid-level" | "senior";
-  period: string;
-  description: string;
-  hours_per_day: string;
-  qualifications: string;
-  benefits: string;
-  quantity: string;
-  salary: string;
-};
-
 export default function JobBoard() {
-  // const [jobs, setJobs] = useState<Job[]>([
-  //   {
-  //     id: "1",
-  //     title: "Software Engineer",
-  //     scope: "Develop and maintain software applications.",
-  //     prerequisite: [
-  //       "Experience with JavaScript",
-  //       "Knowledge of cloud platforms",
-  //     ],
-  //     workplace: "Remote",
-  //     worktype: "fulltime",
-  //     career_stage: "entrylevel",
-  //     period: "Indefinite",
-  //     description:
-  //       "We are looking for a skilled software engineer to join our team.",
-  //     hours_per_day: "8",
-  //     qualifications:
-  //       "Bachelor's degree in Computer Science or equivalent experience.",
-  //     benefits: "Health insurance, Remote work options, Paid leave",
-  //     quantity: "3",
-  //     salary: "$80,000 - $100,000 per year",
-  //   },
-  //   {
-  //     id: "2",
-  //     title: "Product Manager",
-  //     scope: "Lead product development and coordinate across teams.",
-  //     prerequisite: [
-  //       "3+ years of product management experience",
-  //       "Strong communication skills",
-  //     ],
-  //     workplace: "New York",
-  //     worktype: "fulltime",
-  //     career_stage: "entrylevel",
-  //     period: "Indefinite",
-  //     description:
-  //       "Seeking an experienced product manager to lead our product development efforts.",
-  //     hours_per_day: "8",
-  //     qualifications:
-  //       "Bachelor's degree in Business, Marketing, or related field.",
-  //     benefits: "Health insurance, 401(k) match, Relocation assistance",
-  //     quantity: "1",
-  //     salary: "$100,000 - $120,000 per year",
-  //   },
-  //   {
-  //     id: "3",
-  //     title: "UX Designer",
-  //     scope: "Design intuitive and engaging user experiences.",
-  //     prerequisite: [
-  //       "Portfolio of UX design work",
-  //       "Proficiency in design tools",
-  //     ],
-  //     workplace: "San Francisco",
-  //     worktype: "contract",
-  //     career_stage: "entrylevel",
-  //     period: "6 months",
-  //     description:
-  //       "Join our design team to create beautiful and intuitive user experiences.",
-  //     hours_per_day: "6",
-  //     qualifications:
-  //       "Degree in Design or related field, or equivalent experience.",
-  //     benefits: "Flexible work hours",
-  //     quantity: "2",
-  //     salary: "$50 - $70 per hour",
-  //   },
-  // ]);
-
   const [jobs, setJobs] = useState<Job[]>([]);
+  // const [currentJob, setCurrentJob] = useState<Job>({
+  //   id: "",
+  //   title: "",
+  //   scope: "",
+  //   prerequisite: [""],
+  //   workplace: "",
+  //   work_type: "fulltime",
+  //   career_stage: "entrylevel",
+  //   period: "",
+  //   description: "",
+  //   hours_per_day: "",
+  //   qualifications: "",
+  //   benefits: "",
+  //   quantity: "",
+  //   salary: "",
+  // });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    setValue,
+    reset,
+    watch,
+  } = useForm<TJobAdding>({
+    resolver: zodResolver(JobAdding),
+  });
+
+  const onSubmit = async (data: FieldValues) => {
+    // Show loading toast immediately when the request is sent
+    const loadingToastId = toast.loading("รอสักครู่...");
+
+    if (isEditing) {
+      // POST
+      try {
+        const apiUrl = formatInternalUrl("/api/org/add-member");
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data), // Add more here
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to add member");
+        }
+
+        //extract data here
+        const responseData = await res.json();
+
+        // set the errors to each field
+        if (responseData.errors) {
+          toast.error("ข้อมูลไม่ถูกต้อง");
+          Object.entries(responseData.errors).forEach(([key, message]) => {
+            setError(key as keyof TJobAdding, {
+              type: "server",
+              message: message as string,
+            });
+          });
+        }
+        setJobs(responseData);
+      } catch (e) {
+        // add toast here
+        toast.dismiss();
+        toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+        console.error(e);
+      }
+    } else {
+      // PUT
+      try {
+        const apiUrl = formatInternalUrl("/api/org/update-member");
+        const res = await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...data, id: Date.now().toString() }),
+        });
+
+        // On-Recieve Response : Dismiss the loading toast once we have a response
+        toast.dismiss(loadingToastId);
+
+        if (!res.ok) {
+          throw new Error("Failed to update member");
+        }
+
+        const responseData = await res.json();
+        console.log(responseData); // Handle the response data
+
+        setJobs([...jobs, responseData]);
+      } catch (e) {
+        toast.dismiss(loadingToastId);
+        toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+        console.error(e);
+      }
+    }
+    setIsDialogOpen(false);
+  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -131,7 +150,6 @@ export default function JobBoard() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(jobs),
         });
 
         if (!res.ok) {
@@ -140,147 +158,54 @@ export default function JobBoard() {
 
         const data = await res.json();
         setJobs(data);
-        console.log("Jobs stored successfully:", data);
       } catch (error) {
         console.error(error);
-        toast.error("Failed to fetch jobs");
       }
     };
     if (jobs.length > 0) {
       fetchJobs();
     }
 
-    // fetchJobs();
-  }, [jobs]);
+    fetchJobs();
 
-  const [currentJob, setCurrentJob] = useState<Job>({
-    id: "",
-    title: "",
-    scope: "",
-    prerequisite: [""],
-    workplace: "",
-    worktype: "fulltime",
-    career_stage: "entrylevel",
-    period: "",
-    description: "",
-    hours_per_day: "",
-    qualifications: "",
-    benefits: "",
-    quantity: "",
-    salary: "",
-  });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+    // end performance.now();
+  }, [jobs.length]);
 
   const openAddDialog = () => {
-    setCurrentJob({
-      id: "",
-      title: "",
-      scope: "",
-      prerequisite: [""],
-      workplace: "",
-      worktype: "fulltime",
-      career_stage: "entrylevel",
-      period: "",
-      description: "",
-      hours_per_day: "",
-      qualifications: "",
-      benefits: "",
-      quantity: "",
-      salary: "",
-    });
+    // setCurrentJob({
+    //   id: "",
+    //   title: "",
+    //   scope: "",
+    //   prerequisite: [""],
+    //   workplace: "",
+    //   work_type: "fulltime",
+    //   career_stage: "entrylevel",
+    //   period: "",
+    //   description: "",
+    //   hours_per_day: "",
+    //   qualifications: "",
+    //   benefits: "",
+    //   quantity: "",
+    //   salary: "",
+    // });
+    reset();
     setIsEditing(false);
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (job: Job) => {
-    setCurrentJob(job);
+    reset();
+    // setCurrentJob(job);
+
+    // Loop through job fields and set each field value in React Hook Form
+    Object.keys(job).forEach((key) => {
+      // Set each form field dynamically using the setValue method
+      setValue(key as keyof TJobAdding, job[key as keyof Job]);
+      console.log(key, job[key as keyof Job]);
+    });
+
     setIsEditing(true);
     setIsDialogOpen(true);
-  };
-
-  const { register } = useForm<TJobAdding>({
-    resolver: zodResolver(JobAdding),
-  });
-
-  const addOrUpdateJob = async (data: FieldValues) => {
-    // Show loading toast immediately when the request is sent
-    const loadingToastId = toast.loading("รอสักครู่...");
-    if (
-      currentJob.title &&
-      currentJob.scope &&
-      currentJob.prerequisite &&
-      currentJob.workplace &&
-      currentJob.worktype &&
-      currentJob.career_stage &&
-      currentJob.period &&
-      currentJob.description &&
-      currentJob.hours_per_day &&
-      currentJob.qualifications &&
-      currentJob.benefits &&
-      currentJob.quantity &&
-      currentJob.salary
-    ) {
-      if (isEditing) {
-        // POST
-        try {
-          const apiUrl = formatInternalUrl("/api/org/add-member");
-          const res = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data), // Add more here
-          });
-
-          if (!res.ok) {
-            throw new Error("Failed to add member");
-          }
-
-          //extract data here
-          const responseData = await res.json();
-          console.log(responseData);
-        } catch (e) {
-          // add toast here
-          toast.dismiss();
-          toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-          console.error(e);
-        }
-        setJobs(
-          jobs.map((job) => (job.id === currentJob.id ? currentJob : job))
-        );
-      } else {
-        // PUT
-        try {
-          const apiUrl = formatInternalUrl("/api/org/update-member");
-          const res = await fetch(apiUrl, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ...data, id: Date.now().toString() }),
-          });
-
-          // On-Recieve Response : Dismiss the loading toast once we have a response
-          toast.dismiss(loadingToastId);
-
-          if (!res.ok) {
-            throw new Error("Failed to update member");
-          }
-
-          const responseData = await res.json();
-          console.log(responseData); // Handle the response data
-
-          setJobs([...jobs, { ...currentJob, id: Date.now().toString() }]);
-        } catch (e) {
-          toast.dismiss(loadingToastId);
-          toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-          console.error(e);
-        }
-        // setJobs([...jobs, { ...currentJob, id: Date.now().toString() }]);
-      }
-      setIsDialogOpen(false);
-    }
   };
 
   const removeJob = (id: string) => {
@@ -316,7 +241,7 @@ export default function JobBoard() {
               <TableRow key={job.id}>
                 <TableCell>{job.title}</TableCell>
                 <TableCell>{job.workplace}</TableCell>
-                <TableCell>{job.worktype}</TableCell>
+                <TableCell>{job.work_type}</TableCell>
                 <TableCell>{job.career_stage}</TableCell>
                 <TableCell>{job.period}</TableCell>
                 <TableCell>{job.quantity}</TableCell>
@@ -353,114 +278,160 @@ export default function JobBoard() {
                 : "Enter the details of the new job listing here."}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="title" className="text-right">
                 Title
               </Label>
-              <Input
-                {...register("title")}
-                id="title"
-                value={currentJob.title}
-                onChange={(e) =>
-                  setCurrentJob({ ...currentJob, title: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  {...register("title")}
+                  id="title"
+                  // value={currentJob.title}
+                  // onChange={(e) =>
+                  //   setCurrentJob({ ...currentJob, title: e.target.value })
+                  // }
+                  className="col-span-3"
+                />
+                {errors.title && (
+                  <span className="error-msg">
+                    {errors.title.message as string}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="department" className="text-right">
                 Scope
               </Label>
-              <Input
-                {...register("scope")}
-                id="scope"
-                value={currentJob.scope}
-                onChange={(e) =>
-                  setCurrentJob({ ...currentJob, scope: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  {...register("scope")}
+                  id="scope"
+                  // value={currentJob.scope}
+                  // onChange={(e) =>
+                  //   setCurrentJob({ ...currentJob, scope: e.target.value })
+                  // }
+                  className="col-span-3"
+                />
+                {errors.scope && (
+                  <span className="error-msg">
+                    {errors.scope.message as string}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="location" className="text-right">
                 Location
               </Label>
-              <Input
-                {...register("workplace")}
-                id="location"
-                value={currentJob.workplace}
-                onChange={(e) =>
-                  setCurrentJob({ ...currentJob, workplace: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  {...register("workplace")}
+                  id="location"
+                  // value={currentJob.workplace}
+                  // onChange={(e) =>
+                  //   setCurrentJob({ ...currentJob, workplace: e.target.value })
+                  // }
+                  className="col-span-3"
+                />
+                {errors.workplace && (
+                  <span className="error-msg">
+                    {errors.workplace.message as string}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="worktype" className="text-right">
-                WorkType
+              <Label htmlFor="work_type" className="text-right">
+                work_type
               </Label>
-              <Select
-                {...register("worktype")}
-                onValueChange={(value: Job["worktype"]) =>
-                  setCurrentJob({ ...currentJob, worktype: value })
-                }
-                defaultValue={currentJob.worktype}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select job type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fulltime">Full-time</SelectItem>
-                  <SelectItem value="parttime">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="internship">Internship</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  {...register("work_type")}
+                  value={watch("work_type")}
+                  onValueChange={(value: Job["work_type"]) => {
+                    setValue("work_type", value);
+                    // setCurrentJob({ ...currentJob, work_type: value });
+                  }}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select job type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fulltime">Full-time</SelectItem>
+                    <SelectItem value="parttime">Part-time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                    <SelectItem value="internship">Internship</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.work_type && (
+                  <span className="error-msg">
+                    {errors.work_type.message as string}
+                  </span>
+                )}
+              </div>
             </div>
-
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="career stage" className="text-right">
                 Career Stage
               </Label>
-              <Select
-                {...register("carreer_stage")}
-                onValueChange={(value: Job["career_stage"]) =>
-                  setCurrentJob({ ...currentJob, career_stage: value })
-                }
-                defaultValue={currentJob.career_stage}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select career stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrylevel">Entry-level</SelectItem>
-                  <SelectItem value="midlevel">Mid-level</SelectItem>
-                  <SelectItem value="senior">Senior</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3">
+                <Select
+                  {...register("career_stage")}
+                  value={watch("career_stage")}
+                  onValueChange={(value: Job["career_stage"]) => {
+                    setValue("career_stage", value);
+                    // setCurrentJob({ ...currentJob, career_stage: value });
+                  }}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select career stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entrylevel">Entry-level</SelectItem>
+                    <SelectItem value="midlevel">Mid-level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.career_stage && (
+                  <span className="error-msg">
+                    {errors.career_stage.message as string}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
                 Description
               </Label>
-              <Textarea
-                {...register("description")}
-                id="description"
-                value={currentJob.description}
-                onChange={(e) =>
-                  setCurrentJob({ ...currentJob, description: e.target.value })
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Textarea
+                  {...register("description")}
+                  id="description"
+                  // value={currentJob.description}
+                  // onChange={(e) =>
+                  //   setCurrentJob({
+                  //     ...currentJob,
+                  //     description: e.target.value,
+                  //   })
+                  // }
+                  className="w-full"
+                />
+                {errors.description && (
+                  <span className="error-msg">
+                    {errors.description.message as string}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={addOrUpdateJob}>
-              {isEditing ? "Update Job" : "Add Job"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isEditing ? "Update Job" : "Add Job"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
