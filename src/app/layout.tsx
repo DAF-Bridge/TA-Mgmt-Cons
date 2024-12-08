@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Talent Atmos",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="th">
       <body>
         <main>{children}</main>
+        <Toaster />
       </body>
     </html>
   );

@@ -38,22 +38,6 @@ import { formatInternalUrl } from "@/lib/utils";
 
 export default function JobBoard() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  // const [currentJob, setCurrentJob] = useState<Job>({
-  //   id: "",
-  //   title: "",
-  //   scope: "",
-  //   prerequisite: [""],
-  //   workplace: "",
-  //   work_type: "fulltime",
-  //   career_stage: "entrylevel",
-  //   period: "",
-  //   description: "",
-  //   hours_per_day: "",
-  //   qualifications: "",
-  //   benefits: "",
-  //   quantity: "",
-  //   salary: "",
-  // });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -69,32 +53,42 @@ export default function JobBoard() {
     resolver: zodResolver(JobAdding),
   });
 
-  const onSubmit = async (data: FieldValues) => {
-    // Show loading toast immediately when the request is sent
-    const loadingToastId = toast.loading("รอสักครู่...");
+  const handleUpdateJob = async (data: FieldValues, loadingToastId: string) => {
+    // This part will be use when UPDATE the job
+    try {
+      const apiUrl = formatInternalUrl("/api/org/update-member");
 
-    if (isEditing) {
-      // POST
-      try {
-        const apiUrl = formatInternalUrl("/api/org/add-member");
-        const res = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data), // Add more here
-        });
+      const res = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...data, id: Date.now().toString() }),
+      });
 
-        if (!res.ok) {
-          throw new Error("Failed to add member");
-        }
+      // On-Recieve Response : Dismiss the loading toast once we have a response
+      toast.dismiss(loadingToastId);
 
+      if (res.ok) {
+        const responseData = await res.json();
+
+        setJobs([...jobs, responseData]);
+        setIsDialogOpen(false); // Close dialog only on success
+        const successToastId = toast.success("Member updated successfully");
+
+        // Display toast for 5 minutes
+        setTimeout(() => {
+          toast.dismiss(successToastId);
+        }, 1500);
+
+        return;
+      } else {
         //extract data here
         const responseData = await res.json();
 
         // set the errors to each field
         if (responseData.errors) {
-          toast.error("ข้อมูลไม่ถูกต้อง");
+          toast.error("Wrong Inputs");
           Object.entries(responseData.errors).forEach(([key, message]) => {
             setError(key as keyof TJobAdding, {
               type: "server",
@@ -102,43 +96,77 @@ export default function JobBoard() {
             });
           });
         }
-        setJobs(responseData);
-      } catch (e) {
-        // add toast here
-        toast.dismiss();
-        toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-        console.error(e);
       }
-    } else {
-      // PUT
-      try {
-        const apiUrl = formatInternalUrl("/api/org/update-member");
-        const res = await fetch(apiUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...data, id: Date.now().toString() }),
-        });
-
-        // On-Recieve Response : Dismiss the loading toast once we have a response
-        toast.dismiss(loadingToastId);
-
-        if (!res.ok) {
-          throw new Error("Failed to update member");
-        }
-
-        const responseData = await res.json();
-        console.log(responseData); // Handle the response data
-
-        setJobs([...jobs, responseData]);
-      } catch (e) {
-        toast.dismiss(loadingToastId);
-        toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-        console.error(e);
-      }
+    } catch (e) {
+      toast.dismiss(loadingToastId);
+      toast.error("Failed to add member, Try again");
+      console.error(e);
     }
-    setIsDialogOpen(false);
+  };
+
+  const handleAddJob = async (data: FieldValues, loadingToastId: string) => {
+    try {
+      const apiUrl = formatInternalUrl("/api/org/add-member");
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data), // Add more here
+      });
+
+      // On-Recieve Response : Dismiss the loading toast
+      toast.dismiss(loadingToastId);
+
+      if (res.ok) {
+        const responseData = await res.json();
+
+        // set the errors to each field
+        setJobs(responseData);
+        setIsDialogOpen(false); // Close dialog only on success
+        const successToastId = toast.success("Member added successfully");
+
+        // Display toast for 1.5 sec
+        setTimeout(() => {
+          toast.dismiss(successToastId);
+        }, 1500);
+
+        return;
+      } else {
+        //extract data here
+        const responseData = await res.json();
+
+        // set the errors to each field
+        if (responseData.errors) {
+          toast.error("Wrong Inputs");
+          Object.entries(responseData.errors).forEach(([key, message]) => {
+            setError(key as keyof TJobAdding, {
+              type: "server",
+              message: message as string,
+            });
+          });
+        }
+      }
+    } catch (e) {
+      // add toast here
+      toast.dismiss();
+      toast.error("Failed to add member, Try again");
+      console.error(e);
+    }
+  };
+
+  const onSubmit = async (data: FieldValues) => {
+    // Show loading toast immediately when the request is sent
+    const loadingToastId = toast.loading("Please wait...");
+
+    if (isEditing) {
+      // This part will be use when UPDATE the job
+      handleUpdateJob(data, loadingToastId);
+    } else {
+      // This part will be use when CREATE the job
+      handleAddJob(data, loadingToastId);
+    }
+    
   };
 
   useEffect(() => {
@@ -162,9 +190,6 @@ export default function JobBoard() {
         console.error(error);
       }
     };
-    if (jobs.length > 0) {
-      fetchJobs();
-    }
 
     fetchJobs();
 
@@ -172,22 +197,6 @@ export default function JobBoard() {
   }, [jobs.length]);
 
   const openAddDialog = () => {
-    // setCurrentJob({
-    //   id: "",
-    //   title: "",
-    //   scope: "",
-    //   prerequisite: [""],
-    //   workplace: "",
-    //   work_type: "fulltime",
-    //   career_stage: "entrylevel",
-    //   period: "",
-    //   description: "",
-    //   hours_per_day: "",
-    //   qualifications: "",
-    //   benefits: "",
-    //   quantity: "",
-    //   salary: "",
-    // });
     reset();
     setIsEditing(false);
     setIsDialogOpen(true);
@@ -195,13 +204,10 @@ export default function JobBoard() {
 
   const openEditDialog = (job: Job) => {
     reset();
-    // setCurrentJob(job);
-
     // Loop through job fields and set each field value in React Hook Form
     Object.keys(job).forEach((key) => {
       // Set each form field dynamically using the setValue method
       setValue(key as keyof TJobAdding, job[key as keyof Job]);
-      console.log(key, job[key as keyof Job]);
     });
 
     setIsEditing(true);
@@ -287,10 +293,6 @@ export default function JobBoard() {
                 <Input
                   {...register("title")}
                   id="title"
-                  // value={currentJob.title}
-                  // onChange={(e) =>
-                  //   setCurrentJob({ ...currentJob, title: e.target.value })
-                  // }
                   className="col-span-3"
                 />
                 {errors.title && (
@@ -308,10 +310,6 @@ export default function JobBoard() {
                 <Input
                   {...register("scope")}
                   id="scope"
-                  // value={currentJob.scope}
-                  // onChange={(e) =>
-                  //   setCurrentJob({ ...currentJob, scope: e.target.value })
-                  // }
                   className="col-span-3"
                 />
                 {errors.scope && (
@@ -329,10 +327,6 @@ export default function JobBoard() {
                 <Input
                   {...register("workplace")}
                   id="location"
-                  // value={currentJob.workplace}
-                  // onChange={(e) =>
-                  //   setCurrentJob({ ...currentJob, workplace: e.target.value })
-                  // }
                   className="col-span-3"
                 />
                 {errors.workplace && (
@@ -344,7 +338,7 @@ export default function JobBoard() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="work_type" className="text-right">
-                work_type
+                Work Type
               </Label>
               <div className="col-span-3">
                 <Select
@@ -352,7 +346,6 @@ export default function JobBoard() {
                   value={watch("work_type")}
                   onValueChange={(value: Job["work_type"]) => {
                     setValue("work_type", value);
-                    // setCurrentJob({ ...currentJob, work_type: value });
                   }}
                 >
                   <SelectTrigger className="col-span-3">
@@ -382,7 +375,6 @@ export default function JobBoard() {
                   value={watch("career_stage")}
                   onValueChange={(value: Job["career_stage"]) => {
                     setValue("career_stage", value);
-                    // setCurrentJob({ ...currentJob, career_stage: value });
                   }}
                 >
                   <SelectTrigger className="col-span-3">
@@ -410,13 +402,6 @@ export default function JobBoard() {
                 <Textarea
                   {...register("description")}
                   id="description"
-                  // value={currentJob.description}
-                  // onChange={(e) =>
-                  //   setCurrentJob({
-                  //     ...currentJob,
-                  //     description: e.target.value,
-                  //   })
-                  // }
                   className="w-full"
                 />
                 {errors.description && (

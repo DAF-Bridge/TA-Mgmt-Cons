@@ -16,7 +16,7 @@ import {
   BriefcaseIcon,
   TrendingUpIcon,
 } from "lucide-react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const data = [
   {
@@ -144,7 +144,8 @@ export default function DashboardPage() {
                   axisLine={false}
                   tickFormatter={(value) => `${value}`}
                 />
-                <Bar dataKey="total" fill="#" radius={[4, 4, 0, 0]} />
+                <Tooltip/>
+                <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -161,14 +162,14 @@ export default function DashboardPage() {
                   <AvatarImage src="/avatars/01.png" alt="Avatar" />
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-row justify-between">
-                  <div className="ml-4 space-y-1">
+                <div className="flex flex-row justify-between w-full ">
+                  <div className="ml-4 space-y-1 ">
                     <p className="text-sm font-medium leading-none">John Doe</p>
                     <p className="text-sm text-muted-foreground">
                       Applied for Software Engineer position
                     </p>
                   </div>
-                  <div className="ml-auto font-[4px]">Just now</div>
+                  <div className="ml-auto font-[4px] ">Just now</div>
                 </div>
               </div>
               <div className="flex items-center">
@@ -176,7 +177,7 @@ export default function DashboardPage() {
                   <AvatarImage src="/avatars/02.png" alt="Avatar" />
                   <AvatarFallback>JS</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-row justify-between w-full">
                   <div className="ml-4 space-y-1">
                     <p className="text-sm font-medium leading-none">
                       Jane Smith
@@ -193,7 +194,7 @@ export default function DashboardPage() {
                   <AvatarImage src="/avatars/03.png" alt="Avatar" />
                   <AvatarFallback>RJ</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-row justify-between">
+                <div className="flex flex-row justify-between w-full">
                   <div className="ml-4 space-y-1">
                     <p className="text-sm font-medium leading-none">
                       Robert Johnson
