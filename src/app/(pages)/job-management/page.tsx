@@ -51,13 +51,27 @@ export default function JobBoard() {
     watch,
   } = useForm<TJobAdding>({
     resolver: zodResolver(JobAdding),
+    defaultValues: {
+      title: "ML Engineer",
+      scope: "Machine Learning Engineer",
+      prerequisite: [],
+      workplace: "remote",
+      work_type: "fulltime",
+      career_stage: "entrylevel",
+      description: "help us to build the next big thing",
+      hours_per_day: "8",
+      qualifications: "at least 2 years of experience",
+      benefits: "health insurance, paid time off",
+      quantity: 1,
+      salary: 15000,
+    },
   });
 
-  const handleUpdateJob = async (data: FieldValues, loadingToastId: string) => {
+  const handleUpdateJob = async (data: TJobAdding, loadingToastId: string) => {
     // This part will be use when UPDATE the job
     try {
-      const apiUrl = formatInternalUrl("/api/org/update-member");
-
+      const apiUrl = formatInternalUrl("/api/org/1/update-job/1"); // Constant URL for now
+      // console.log(apiUrl);
       const res = await fetch(apiUrl, {
         method: "PUT",
         headers: {
@@ -72,9 +86,16 @@ export default function JobBoard() {
       if (res.ok) {
         const responseData = await res.json();
 
-        setJobs([...jobs, responseData]);
+        // setJobs([...jobs, responseData]);
+        // setJobs((prev) => [...prev, responseData]); // Add the new job to the state
+        setJobs((prev) =>
+          prev.map((job) =>
+            job.id === responseData.id ? { ...job, ...responseData } : job
+          )
+        ); //update the state optimistically
+
         setIsDialogOpen(false); // Close dialog only on success
-        const successToastId = toast.success("Member updated successfully");
+        const successToastId = toast.success("Job updated successfully");
 
         // Display toast for 5 minutes
         setTimeout(() => {
@@ -99,14 +120,14 @@ export default function JobBoard() {
       }
     } catch (e) {
       toast.dismiss(loadingToastId);
-      toast.error("Failed to add member, Try again");
+      toast.error("Failed to update job, Try again");
       console.error(e);
     }
   };
 
   const handleAddJob = async (data: FieldValues, loadingToastId: string) => {
     try {
-      const apiUrl = formatInternalUrl("/api/org/add-member");
+      const apiUrl = formatInternalUrl("/api/org/1/add-job"); // Constant URL for now
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -122,9 +143,15 @@ export default function JobBoard() {
         const responseData = await res.json();
 
         // set the errors to each field
-        setJobs(responseData);
+        // setJobs(responseData);
+        setJobs((prev) =>
+          prev.map((job) =>
+            job.id === responseData.id ? { ...job, ...responseData } : job
+          )
+        ); //update the state optimistically
+
         setIsDialogOpen(false); // Close dialog only on success
-        const successToastId = toast.success("Member added successfully");
+        const successToastId = toast.success("Job added successfully");
 
         // Display toast for 1.5 sec
         setTimeout(() => {
@@ -150,51 +177,64 @@ export default function JobBoard() {
     } catch (e) {
       // add toast here
       toast.dismiss();
-      toast.error("Failed to add member, Try again");
+      toast.error("Failed to add job, Try again");
       console.error(e);
     }
   };
 
-  const onSubmit = async (data: FieldValues) => {
+  const onSubmit = async (data: TJobAdding) => {
+    console.log("Form submitted", data);
+
     // Show loading toast immediately when the request is sent
     const loadingToastId = toast.loading("Please wait...");
 
     if (isEditing) {
       // This part will be use when UPDATE the job
       handleUpdateJob(data, loadingToastId);
-    } else {
+    }
+    if (!isEditing) {
       // This part will be use when CREATE the job
       handleAddJob(data, loadingToastId);
     }
-    
   };
+
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     try {
+  //       const apiUrl = formatInternalUrl("/api/org/1/get-jobs");
+  //       const res = await fetch(apiUrl, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
+
+  //       if (!res.ok) {
+  //         throw new Error("Failed to fetch jobs");
+  //       }
+
+  //       const data = await res.json();
+  //       setJobs(data);
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   };
+
+  //   fetchJobs();
+  // }, [jobs.length]);
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const apiUrl = formatInternalUrl("/api/org/1/get-jobs");
-        const res = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch jobs");
-        }
-
-        const data = await res.json();
-        setJobs(data);
+        const res = await fetch(formatInternalUrl("/api/org/1/get-jobs"));
+        if (!res.ok) throw new Error("Failed to fetch jobs");
+        setJobs(await res.json());
       } catch (error) {
         console.error(error);
       }
     };
-
     fetchJobs();
-
-    // end performance.now();
-  }, [jobs.length]);
+  }, []);
 
   const openAddDialog = () => {
     reset();
@@ -284,6 +324,7 @@ export default function JobBoard() {
                 : "Enter the details of the new job listing here."}
             </DialogDescription>
           </DialogHeader>
+
           <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="title" className="text-right">
@@ -291,7 +332,7 @@ export default function JobBoard() {
               </Label>
               <div className="col-span-3">
                 <Input
-                  {...register("title")}
+                  {...register("title", { required: true })}
                   id="title"
                   className="col-span-3"
                 />
@@ -303,7 +344,7 @@ export default function JobBoard() {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="department" className="text-right">
+              <Label htmlFor="scope" className="text-right">
                 Scope
               </Label>
               <div className="col-span-3">
@@ -317,18 +358,56 @@ export default function JobBoard() {
                     {errors.scope.message as string}
                   </span>
                 )}
+                {/* {typeof watch("scope")} */}
               </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">
-                Location
+              <Label htmlFor="prerequisite" className="text-right">
+                Prerequisite
               </Label>
               <div className="col-span-3">
-                <Input
-                  {...register("workplace")}
-                  id="location"
-                  className="col-span-3"
+                <Textarea
+                  {...register("prerequisite", {
+                    setValueAs: (value) =>
+                      typeof value === "string"
+                        ? value.split(",").map((item: string) => item.trim())
+                        : value, // Check if value is a string
+                  })}
+                  id="prerequisite"
+                  className="w-full"
+                  placeholder="Enter prerequisites separated by commas"
                 />
+                {errors.prerequisite && (
+                  <span className="error-msg">
+                    {errors.prerequisite.message as string}
+                  </span>
+                )}
+                {/* {typeof watch("prerequisite")} */}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="workplace" className="text-right">
+                Work Place
+              </Label>
+              <div className="col-span-3">
+                <Select
+                  {...register("workplace")}
+                  value={watch("workplace")}
+                  onValueChange={(value: Job["workplace"]) => {
+                    setValue("workplace", value);
+                  }}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select workplace type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="remote">Remote</SelectItem>
+                    <SelectItem value="onsite">On-site</SelectItem>
+                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
                 {errors.workplace && (
                   <span className="error-msg">
                     {errors.workplace.message as string}
@@ -349,7 +428,7 @@ export default function JobBoard() {
                   }}
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select job type" />
+                    <SelectValue placeholder="Select work type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fulltime">Full-time</SelectItem>
@@ -411,9 +490,118 @@ export default function JobBoard() {
                 )}
               </div>
             </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="hours_per_day" className="text-right">
+                Hours per day
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("hours_per_day")}
+                  id="hours_per_day"
+                  type="text"
+                  className="col-span-3"
+                />
+                {errors.hours_per_day && (
+                  <span className="error-msg">
+                    {errors.hours_per_day.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="qualifications" className="text-right">
+                Qualifications
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("qualifications")}
+                  id="qualifications"
+                  className="col-span-3"
+                />
+                {errors.qualifications && (
+                  <span className="error-msg">
+                    {errors.qualifications.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="benefits" className="text-right">
+                Benefits
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("benefits")}
+                  id="benefits"
+                  className="col-span-3"
+                />
+                {errors.benefits && (
+                  <span className="error-msg">
+                    {errors.benefits.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">
+                Quantity
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("quantity", {
+                    setValueAs: (value) => Number(value) || 0, // Convert input value to a number
+                  })}
+                  id="quantity"
+                  type="number"
+                  className="col-span-3"
+                />
+                {errors.quantity && (
+                  <span className="error-msg">
+                    {errors.quantity.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="salary" className="text-right">
+                Salary
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("salary", {
+                    setValueAs: (value) => Number(value) || 0, // Convert input value to a number
+                  })}
+                  id="salary"
+                  type="number"
+                  className="col-span-3"
+                />
+                {errors.salary && (
+                  <span className="error-msg">
+                    {errors.salary.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary"
+              >
                 {isEditing ? "Update Job" : "Add Job"}
+              </Button>
+              <Button
+                variant="secondary"
+                className="bg-red-500 text-white hover:bg-red-600"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cancel
               </Button>
             </DialogFooter>
           </form>
