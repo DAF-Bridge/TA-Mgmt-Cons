@@ -48,6 +48,7 @@ export async function PUT(request: Request,
         }
         
         const res = await fetch(apiUrl, {
+            cache: "no-cache",
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",

@@ -51,49 +51,29 @@ export default function JobBoard() {
     watch,
   } = useForm<TJobAdding>({
     resolver: zodResolver(JobAdding),
-    defaultValues: {
-      title: "ML Engineer",
-      scope: "Machine Learning Engineer",
-      prerequisite: [],
-      workplace: "remote",
-      work_type: "fulltime",
-      career_stage: "entrylevel",
-      description: "help us to build the next big thing",
-      hours_per_day: "8",
-      qualifications: "at least 2 years of experience",
-      benefits: "health insurance, paid time off",
-      quantity: 1,
-      salary: 15000,
-    },
   });
 
-  const handleUpdateJob = async (data: TJobAdding, loadingToastId: string) => {
+  const handleUpdateJob = async (
+    jobId: number,
+    data: TJobAdding,
+    loadingToastId: string
+  ) => {
     // This part will be use when UPDATE the job
     try {
-      const apiUrl = formatInternalUrl("/api/org/1/update-job/1"); // Constant URL for now
+      const apiUrl = formatInternalUrl(`/api/org/1/update-job/${jobId}`); // Constant URL for now
       // console.log(apiUrl);
       const res = await fetch(apiUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...data, id: Date.now().toString() }),
+        body: JSON.stringify(data),
       });
 
       // On-Recieve Response : Dismiss the loading toast once we have a response
       toast.dismiss(loadingToastId);
 
       if (res.ok) {
-        const responseData = await res.json();
-
-        // setJobs([...jobs, responseData]);
-        // setJobs((prev) => [...prev, responseData]); // Add the new job to the state
-        setJobs((prev) =>
-          prev.map((job) =>
-            job.id === responseData.id ? { ...job, ...responseData } : job
-          )
-        ); //update the state optimistically
-
         setIsDialogOpen(false); // Close dialog only on success
         const successToastId = toast.success("Job updated successfully");
 
@@ -140,16 +120,6 @@ export default function JobBoard() {
       toast.dismiss(loadingToastId);
 
       if (res.ok) {
-        const responseData = await res.json();
-
-        // set the errors to each field
-        // setJobs(responseData);
-        setJobs((prev) =>
-          prev.map((job) =>
-            job.id === responseData.id ? { ...job, ...responseData } : job
-          )
-        ); //update the state optimistically
-
         setIsDialogOpen(false); // Close dialog only on success
         const successToastId = toast.success("Job added successfully");
 
@@ -182,57 +152,46 @@ export default function JobBoard() {
     }
   };
 
+
+  const fetchJobs = async () => {
+    try {
+      const apiUrl = formatInternalUrl("/api/org/1/get-jobs");
+      const res = await fetch(apiUrl, {
+        cache: "no-cache",
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) throw new Error("Failed to fetch jobs");
+      const resData = await res.json();
+      console.log(resData);
+      setJobs(resData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onSubmit = async (data: TJobAdding) => {
-    console.log("Form submitted", data);
+    console.log("isSubmitting", isSubmitting);
+    console.log("data", data);
 
     // Show loading toast immediately when the request is sent
     const loadingToastId = toast.loading("Please wait...");
 
     if (isEditing) {
       // This part will be use when UPDATE the job
-      handleUpdateJob(data, loadingToastId);
-    }
-    if (!isEditing) {
+      const jobId = watch("ID");
+      await handleUpdateJob(jobId as number, data, loadingToastId);
+    } else {
       // This part will be use when CREATE the job
-      handleAddJob(data, loadingToastId);
+      await handleAddJob(data, loadingToastId);
     }
+    console.log("isSubmitted");
+    await fetchJobs();
   };
 
-  // useEffect(() => {
-  //   const fetchJobs = async () => {
-  //     try {
-  //       const apiUrl = formatInternalUrl("/api/org/1/get-jobs");
-  //       const res = await fetch(apiUrl, {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       });
-
-  //       if (!res.ok) {
-  //         throw new Error("Failed to fetch jobs");
-  //       }
-
-  //       const data = await res.json();
-  //       setJobs(data);
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
-
-  //   fetchJobs();
-  // }, [jobs.length]);
-
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const res = await fetch(formatInternalUrl("/api/org/1/get-jobs"));
-        if (!res.ok) throw new Error("Failed to fetch jobs");
-        setJobs(await res.json());
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchJobs();
   }, []);
 
@@ -243,6 +202,7 @@ export default function JobBoard() {
   };
 
   const openEditDialog = (job: Job) => {
+    console.log(job);
     reset();
     // Loop through job fields and set each field value in React Hook Form
     Object.keys(job).forEach((key) => {
@@ -315,7 +275,7 @@ export default function JobBoard() {
       </div>
       {/* // This is the dialog to add or edit a job */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-scroll">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit Job" : "Add New Job"}</DialogTitle>
             <DialogDescription>
@@ -325,14 +285,28 @@ export default function JobBoard() {
             </DialogDescription>
           </DialogHeader>
 
-          <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="grid gap-4 py-4"
+            onSubmit={handleSubmit(onSubmit, (errors) =>
+              console.log("errors", errors)
+            )}
+          >
+            <input
+              type="hidden"
+              id="orgId"
+              {...register("ID", {
+                required: false,
+                setValueAs: (value) =>
+                  value === "" ? undefined : Number(value),
+              })}
+            />
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="title" className="text-right">
-                Title
+                Job Title
               </Label>
               <div className="col-span-3">
                 <Input
-                  {...register("title", { required: true })}
+                  {...register("title")}
                   id="title"
                   className="col-span-3"
                 />
@@ -348,7 +322,7 @@ export default function JobBoard() {
                 Scope
               </Label>
               <div className="col-span-3">
-                <Input
+                <Textarea
                   {...register("scope")}
                   id="scope"
                   className="col-span-3"
@@ -358,7 +332,6 @@ export default function JobBoard() {
                     {errors.scope.message as string}
                   </span>
                 )}
-                {/* {typeof watch("scope")} */}
               </div>
             </div>
 
@@ -383,7 +356,6 @@ export default function JobBoard() {
                     {errors.prerequisite.message as string}
                   </span>
                 )}
-                {/* {typeof watch("prerequisite")} */}
               </div>
             </div>
 
@@ -433,8 +405,8 @@ export default function JobBoard() {
                   <SelectContent>
                     <SelectItem value="fulltime">Full-time</SelectItem>
                     <SelectItem value="parttime">Part-time</SelectItem>
-                    <SelectItem value="contract">Contract</SelectItem>
                     <SelectItem value="internship">Internship</SelectItem>
+                    <SelectItem value="volunteer">Volunteer</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.work_type && (
@@ -490,7 +462,24 @@ export default function JobBoard() {
                 )}
               </div>
             </div>
-
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="period" className="text-right">
+                Work Period
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  {...register("period")}
+                  id="period"
+                  type="text"
+                  className="col-span-3"
+                />
+                {errors.period && (
+                  <span className="error-msg">
+                    {errors.period.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="hours_per_day" className="text-right">
                 Hours per day
@@ -515,7 +504,7 @@ export default function JobBoard() {
                 Qualifications
               </Label>
               <div className="col-span-3">
-                <Input
+                <Textarea
                   {...register("qualifications")}
                   id="qualifications"
                   className="col-span-3"
@@ -533,7 +522,7 @@ export default function JobBoard() {
                 Benefits
               </Label>
               <div className="col-span-3">
-                <Input
+                <Textarea
                   {...register("benefits")}
                   id="benefits"
                   className="col-span-3"
@@ -590,18 +579,20 @@ export default function JobBoard() {
 
             <DialogFooter>
               <Button
+                variant="secondary"
+                disabled={isSubmitting}
+                type="button"
+                className="bg-red-500 text-white hover:bg-red-600"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
                 type="submit"
                 disabled={isSubmitting}
                 className="btn-primary"
               >
                 {isEditing ? "Update Job" : "Add Job"}
-              </Button>
-              <Button
-                variant="secondary"
-                className="bg-red-500 text-white hover:bg-red-600"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
               </Button>
             </DialogFooter>
           </form>

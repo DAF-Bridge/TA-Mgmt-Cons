@@ -7,14 +7,13 @@ export async function GET(
 ) {
   try {
     const apiUrl = formatExternalUrl(`/org/${params.orgId}/list-jobs`);
-    // console.log(apiUrl);
     const res = await fetch(apiUrl, {
+      cache: "no-cache",
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
-    // console.log(res);
     if (!res.ok) {
       throw new Error(`Failed to fetch: ${res.statusText} (${res.status})`);
     }

@@ -2,11 +2,12 @@ import { z } from "zod";
 
 // Job Adding
 export const JobAdding = z.object({
+  ID: z.number().optional(),
   title: z.string().min(1, { message: "Title is required" }),
   scope: z.string().min(1, { message: "Scope is required" }),
   prerequisite: z.array(z.string()).optional(),
   workplace: z.enum(["remote", "onsite", "hybrid"], { message: "Invalid workplace type" }),
-  work_type: z.enum(["fulltime", "parttime", "contract", "internship"], { message: "Invalid work type" }),
+  work_type: z.enum(["fulltime", "parttime", "volunteer", "internship"], { message: "Invalid work type" }),
   career_stage: z.enum(["entrylevel", "midlevel", "senior"], { message: "Invalid career stage" }),
   period: z.string().min(1, { message: "Period is required" }),
   description: z.string().min(1, { message: "Description is required" }),
@@ -28,7 +29,7 @@ export type Job = {
   scope: string;
   prerequisite: string[];
   workplace: "remote" | "onsite" | "hybrid";
-  work_type: "fulltime" | "parttime" | "contract" | "internship";
+  work_type: "fulltime" | "parttime" | "volunteer" | "internship";
   career_stage: "entrylevel" | "midlevel" | "senior";
   period: string;
   description: string;
