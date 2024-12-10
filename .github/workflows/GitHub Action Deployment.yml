@@ -2,7 +2,7 @@ name: Deploy to Netlify
 
 on:
   push:
-    branches: [main, develop-anda] # or the branch you want to trigger the deployment on
+    branches: [main, develop-anda, develop-did] # or the branch you want to trigger the deployment on
 
 jobs:
   build-and-deploy:
