@@ -9,11 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "pages:build": "npx @cloudflare/next-on-pages",
-    "preview": "npm run pages:build && wrangler pages dev",
-    "deploy": "npm run pages:build && wrangler pages deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -37,14 +33,13 @@
     "react-dom": "^18",
     "react-hook-form": "^7.53.2",
     "react-hot-toast": "^2.4.1",
+    "react-toast": "^1.0.3",
     "recharts": "^2.14.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.6",
-    "@cloudflare/workers-types": "^4.20241202.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
