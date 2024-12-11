@@ -28,47 +28,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlusIcon, TrashIcon, PencilIcon } from "lucide-react";
-import { useForm } from "react-hook-form";
-import {
-  Organization,
-  OrganizationSchema,
-  TOrganizationSchema,
-} from "@/lib/types";
-import { zodResolver } from "@hookform/resolvers/zod";
 
-export default function OrganizationManagement() {
-  const [orgs, setOrgs] = useState<Organization[]>([]);
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  role: "Moderator" | "Employee";
+};
+
+export default function OrgManagement() {
+  const [members, setMembers] = useState<Member[]>([
+    { id: "1", name: "John Doe", email: "john@example.com", role: "Moderator" },
+    { id: "2", name: "Jane Smith", email: "jane@example.com", role: "Employee" },
+    { id: "3", name: "Bob Johnson", email: "bob@example.com", role: "Employee" },
+  ]);
+
+  const [currentMember, setCurrentMember] = useState<Member>({
+    id: "",
+    name: "",
+    email: "",
+    role: "Employee",
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-    setValue,
-    reset,
-    watch,
-  } = useForm<TOrganizationSchema>({
-    resolver: zodResolver(OrganizationSchema),
-  });
-
   const openAddDialog = () => {
+    setCurrentMember({ id: "", name: "", email: "", role: "Employee" });
     setIsEditing(false);
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = () => {
+  const openEditDialog = (member: Member) => {
+    setCurrentMember(member);
     setIsEditing(true);
     setIsDialogOpen(true);
   };
 
-  const onSubmit = () => {
-    setIsDialogOpen(false);
+  const addOrUpdateMember = () => {
+    if (currentMember.name && currentMember.email) {
+      if (isEditing) {
+        setMembers(
+          members.map((m) => (m.id === currentMember.id ? currentMember : m))
+        );
+      } else {
+        setMembers([
+          ...members,
+          { ...currentMember, id: Date.now().toString() },
+        ]);
+      }
+      setIsDialogOpen(false);
+    }
   };
 
   const removeMember = (id: string) => {
-    setOrgs(orgs.filter((org) => org.id !== id));
+    setMembers(members.filter((member) => member.id !== id));
   };
 
   return (
@@ -87,28 +100,32 @@ export default function OrganizationManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orgs.map((org) => (
-              <TableRow key={org.id}>
-                <TableCell>{org.name}</TableCell>
-                <TableCell>{org.email}</TableCell>
-                <TableCell>{org.phone}</TableCell>
+            {members.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell>{member.name}</TableCell>
+                <TableCell>{member.email}</TableCell>
+                <TableCell>{member.role}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="mr-2"
-                    onClick={() => openEditDialog()}
+                    onClick={() => openEditDialog(member)}
                   >
                     <PencilIcon className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeMember(member.id)}
+                  >
                     <TrashIcon className="h-4 w-4" />
                   </Button>
                 </TableCell>
@@ -117,10 +134,9 @@ export default function OrganizationManagement() {
           </TableBody>
         </Table>
       </div>
-
       {/* // This is the dialog to add or edit a member */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[800px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? "Edit Member" : "Add New Member"}
@@ -131,148 +147,59 @@ export default function OrganizationManagement() {
                 : "Enter the details of the new organization member here."}
             </DialogDescription>
           </DialogHeader>
-          <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="orgPic" className="text-right">
-                Add Picture
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("orgPic")}
-                  id="orgPic"
-                  type="file"
-                  // value={currentMember.name}
-                  // onChange={(e) =>
-                  //   setCurrentMember({ ...currentMember, name: e.target.value })
-                  // }
-                  className="col-span-3"
-                />
-                {
-                  <span className="error-msg">
-                    {watch("orgPic") as string}
-                  </span>
-                }
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="bgPic" className="text-right">
-                Add Background Image
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("bgPic")}
-                  id="bgPic"
-                  type="file"
-                  // value={currentMember.name}
-                  // onChange={(e) =>
-                  //   setCurrentMember({ ...currentMember, name: e.target.value })
-                  // }
-                  className="col-span-3"
-                />
-                {errors.bgPic && (
-                  <span className="error-msg">
-                    {errors.bgPic.message as string}
-                  </span>
-                )}
-              </div>
-            </div>
+          <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Organization Name
+                Name
               </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("name")}
-                  id="name"
-                  // value={currentMember.name}
-                  // onChange={(e) =>
-                  //   setCurrentMember({ ...currentMember, name: e.target.value })
-                  // }
-                  className="col-span-3"
-                />
-                {errors.name && (
-                  <span className="error-msg">
-                    {errors.name.message as string}
-                  </span>
-                )}
-              </div>
+              <Input
+                id="name"
+                value={currentMember.name}
+                onChange={(e) =>
+                  setCurrentMember({ ...currentMember, name: e.target.value })
+                }
+                className="col-span-3"
+              />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="email" className="text-right">
                 Email
               </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("email")}
-                  id="email"
-                  type="email"
-                  // value={currentMember.email}
-                  // onChange={(e) =>
-                  //   setCurrentMember({ ...currentMember, email: e.target.value })
-                  // }
-                  className="col-span-3"
-                />
-                {errors.email && (
-                  <span className="error-msg">
-                    {errors.email.message as string}
-                  </span>
-                )}
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={currentMember.email}
+                onChange={(e) =>
+                  setCurrentMember({ ...currentMember, email: e.target.value })
+                }
+                className="col-span-3"
+              />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">
-                Phone No.
+              <Label htmlFor="role" className="text-right">
+                Role
               </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("phone")}
-                  id="phone"
-                  // value={currentMember.organization}
-                  // onChange={(e) =>
-                  //   setCurrentMember({
-                  //     ...currentMember,
-                  //     organization: e.target.value,
-                  //   })
-                  // }
-                  className="col-span-3"
-                />
-                {errors.phone && (
-                  <span className="error-msg">
-                    {errors.phone.message as string}
-                  </span>
-                )}
-              </div>
+              <Select
+                onValueChange={(value: Member["role"]) =>
+                  setCurrentMember({ ...currentMember, role: value })
+                }
+                defaultValue={currentMember.role}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Moderator">Moderator</SelectItem>
+                  <SelectItem value="Member">Employee</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="expertise" className="text-right">
-                Business Expertise
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  {...register("expertise")}
-                  id="expertise"
-                  // value={currentMember.organization}
-                  // onChange={(e) =>
-                  //   setCurrentMember({
-                  //     ...currentMember,
-                  //     organization: e.target.value,
-                  //   })
-                  // }
-                  className="col-span-3"
-                />
-                {errors.expertise && (
-                  <span className="error-msg">
-                    {errors.expertise.message as string}
-                  </span>
-                )}
-              </div>
-            </div>{" "}
-            <DialogFooter>
-              <Button type="submit">
-                {isEditing ? "Update Member" : "Add Member"}
-              </Button>
-            </DialogFooter>
-          </form>
+          </div>
+          <DialogFooter>
+            <Button type="submit" onClick={addOrUpdateMember}>
+              {isEditing ? "Update Member" : "Add Member"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

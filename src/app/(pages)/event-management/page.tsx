@@ -132,7 +132,7 @@ export default function EventManagement() {
                   });
                 }}
               >
-                <PlusIcon className="mr-2 h-4 w-4" />
+                <PlusIcon className="mr-2 h-4 w-4"/>
                 Add Event
               </Button>
             </DialogTrigger>
