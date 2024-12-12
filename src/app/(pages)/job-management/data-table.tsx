@@ -29,17 +29,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal, PlusIcon } from "lucide-react";
+import Spinner from "@/components/ui/spinner";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   openAddDialog: () => void;
+  isLoading: boolean;
 }
 
 export function JobDataTable<TData, TValue>({
   columns,
   data,
   openAddDialog,
+  isLoading,
 }: Readonly<DataTableProps<TData, TValue>>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -152,7 +155,7 @@ export function JobDataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {isLoading ? <Spinner /> : "No results."}
                 </TableCell>
               </TableRow>
             )}

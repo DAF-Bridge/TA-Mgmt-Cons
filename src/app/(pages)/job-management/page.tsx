@@ -14,6 +14,7 @@ export default function JobBoard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<TJobAdding>({
     resolver: zodResolver(JobAdding),
@@ -21,6 +22,7 @@ export default function JobBoard() {
 
   const fetchJobs = async () => {
     try {
+      setIsLoading(true); // Ensure loading is set to true at the start
       const apiUrl = formatInternalUrl("/api/org/1/get-jobs");
       const res = await fetch(apiUrl, {
         cache: "no-cache",
@@ -35,6 +37,9 @@ export default function JobBoard() {
       setJobs(resData);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to fetch jobs"); // Optional: show error toast
+    } finally {
+      setIsLoading(false);
     }
   };
   useEffect(() => {
@@ -122,6 +127,7 @@ export default function JobBoard() {
           columns={columns(openEditDialog)}
           data={jobs}
           openAddDialog={openAddDialog}
+          isLoading={isLoading}
           // onDelete={removeJob}
         />
       </div>

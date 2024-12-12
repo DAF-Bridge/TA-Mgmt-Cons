@@ -1,6 +1,6 @@
 import React from "react";
 
-const Spinner = ({ size = "medium", color = "black", className = "" }) => {
+const Spinner = ({ size = "medium", color = "gray", className = "" }) => {
   // Size variations
   const sizeClasses: { [key: string]: string } = {
     small: "w-4 h-4",
